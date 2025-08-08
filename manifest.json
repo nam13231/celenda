@@ -99,6 +99,17 @@
     }
   ],
   "iarc_rating_id": "placeholder-iarc-id-12345678",
+  "edge_side_panel": {
+    "preferred_width": 380,
+    "preferred_height": 600
+  },
+  "widgets": [
+    {
+      "name": "Lịch hôm nay",
+      "description": "Xem nhiệm vụ hôm nay",
+      "url": "/widget.html"
+    }
+  ],
   "prefer_related_applications": false,
   "related_applications": []
 }
