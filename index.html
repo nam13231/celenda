@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lịch Làm Việc</title>
+
+  <!-- PWA / Meta -->
+  <meta name="theme-color" content="#4CAF50" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" href="/icons/icon-192.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Lịch Làm Việc" />
+
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f5f5f5}
+    header{padding:14px;text-align:center;background:#4CAF50;color:#fff}
+    h1{margin:0;font-size:20px}
+    main{padding:12px;max-width:980px;margin:14px auto}
+    .month{margin:12px 0;padding:10px;background:#fff;border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.06)}
+    .month h2{text-align:center;margin:6px 0}
+    .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+    .day{padding:10px;background:#eaeff2;border-radius:6px;text-align:center;min-height:72px;cursor:pointer;overflow:hidden}
+    .day.has-task{background:#b3e5fc}
+    #taskModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);align-items:center;justify-content:center}
+    #taskBox{background:#fff;padding:14px;border-radius:8px;width:320px;max-width:94%}
+    textarea{width:100%;height:110px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:vertical}
+    .row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+    button{padding:8px 12px;border-radius:6px;border:0;background:#4CAF50;color:#fff;cursor:pointer}
+    button.secondary{background:#777}
+    footer{padding:10px;text-align:center;color:#666;font-size:13px}
+  </style>
+</head>
+<body>
+  <header><h1>📅 Lịch Làm Việc (Offline)</h1></header>
+  <main>
+    <div id="calendar-container"></div>
+  </main>
+
+  <!-- Modal nhập công việc -->
+  <div id="taskModal">
+    <div id="taskBox">
+      <h3 id="selectedDate">Ngày</h3>
+      <textarea id="taskInput" placeholder="Nhập công việc..."></textarea>
+      <div class="row">
+        <button onclick="saveTask()">Lưu</button>
+        <button class="secondary" onclick="closeModal()">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Lưu cục bộ trên thiết bị (LocalStorage). Muốn đồng bộ cloud thì thêm backend hoặc Supabase/Firebase.
+  </footer>
+
+<script>
+/* ====== LÝ LỊCH & LƯU TRỮ ====== */
+const container = document.getElementById('calendar-container');
+const taskModal = document.getElementById('taskModal');
+const selectedDateEl = document.getElementById('selectedDate');
+const taskInput = document.getElementById('taskInput');
+let currentKey = null;
+const YEAR = new Date().getFullYear();
+
+function daysInMonth(month, year){ return new Date(year, month, 0).getDate(); }
+
+function renderCalendar(){
+  container.innerHTML = '';
+  for(let m=1;m<=12;m++){
+    const monthDiv = document.createElement('div');
+    monthDiv.className='month';
+    monthDiv.innerHTML = `<h2>Tháng ${m} - ${YEAR}</h2>`;
+    const calGrid = document.createElement('div'); calGrid.className='calendar';
+    const days = daysInMonth(m,YEAR);
+    for(let d=1; d<=days; d++){
+      const dayDiv = document.createElement('div');
+      dayDiv.className='day';
+      dayDiv.textContent = d;
+      const key = `${YEAR}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      if(localStorage.getItem(key)) dayDiv.classList.add('has-task');
+      dayDiv.onclick = () => openModal(key, d, m);
+      calGrid.appendChild(dayDiv);
+    }
+    monthDiv.appendChild(calGrid);
+    container.appendChild(monthDiv);
+  }
+}
+
+function openModal(key, day, month){
+  currentKey = key;
+  selectedDateEl.textContent = `Công việc ${day}/${month}/${YEAR}`;
+  taskInput.value = localStorage.getItem(key) || '';
+  taskModal.style.display = 'flex';
+}
+
+function closeModal(){ taskModal.style.display='none'; currentKey=null; }
+
+function saveTask(){
+  if(!currentKey) return closeModal();
+  const v = taskInput.value.trim();
+  if(v) localStorage.setItem(currentKey,v);
+  else localStorage.removeItem(currentKey);
+  renderCalendar();
+  closeModal();
+}
+
+/* ====== SERVICE WORKER REQUEST (PERMS) ====== */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', async()=>{
+    try{
+      const reg = await navigator.serviceWorker.register('/service-worker.js');
+      console.log('SW registered',reg);
+
+      // Background Sync registration (if supported)
+      if('sync' in reg){
+        try{ await reg.sync.register('sync-tasks'); console.log('sync registered'); }catch(e){console.log('sync register fail',e);}
+      }
+
+      // Periodic Sync registration (if supported and permission granted)
+      if('periodicSync' in reg){
+        try{
+          const status = await navigator.permissions.query({name:'periodic-background-sync'});
+          if(status.state === 'granted'){
+            await reg.periodicSync.register('update-calendar',{minInterval:24*60*60*1000});
+            console.log('periodic sync registered');
+          } else {
+            console.log('periodic sync not granted:',status.state);
+          }
+        }catch(e){console.log('periodic sync fail',e);}
+      }
+
+    }catch(err){ console.warn('SW reg failed',err); }
+  });
+}
+
+/* ====== PUSH SUBSCRIPTION (mẫu client side) ======
+   NOTE: cần server để gửi push (VAPID keys). Đây chỉ sample request user --> server.
+*/
+async function subscribeForPush(){
+  if(!('serviceWorker' in navigator)) return;
+  const reg = await navigator.serviceWorker.ready;
+  // show UI or send request to your backend to subscribe using VAPID public key
+  // Example: fetch('/subscribe', { method:'POST', body: JSON.stringify({}) })
+}
+
+/* ====== START ====== */
+renderCalendar();
+</script>
+</body>
+</html>
