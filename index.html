@@ -1,152 +1,227 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lịch Làm Việc</title>
-
-  <!-- PWA / Meta -->
-  <meta name="theme-color" content="#4CAF50" />
-  <link rel="manifest" href="/manifest.json" />
-  <link rel="icon" href="/icons/icon-192.png" type="image/png" />
-  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Lịch Làm Việc" />
-
+  <meta charset="UTF-8">
+  <title>Mục Tiêu Học Tập</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f5f5f5}
-    header{padding:14px;text-align:center;background:#4CAF50;color:#fff}
-    h1{margin:0;font-size:20px}
-    main{padding:12px;max-width:980px;margin:14px auto}
-    .month{margin:12px 0;padding:10px;background:#fff;border-radius:8px;box-shadow:0 0 8px rgba(0,0,0,0.06)}
-    .month h2{text-align:center;margin:6px 0}
-    .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
-    .day{padding:10px;background:#eaeff2;border-radius:6px;text-align:center;min-height:72px;cursor:pointer;overflow:hidden}
-    .day.has-task{background:#b3e5fc}
-    #taskModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);align-items:center;justify-content:center}
-    #taskBox{background:#fff;padding:14px;border-radius:8px;width:320px;max-width:94%}
-    textarea{width:100%;height:110px;border:1px solid #ddd;border-radius:6px;padding:8px;resize:vertical}
-    .row{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
-    button{padding:8px 12px;border-radius:6px;border:0;background:#4CAF50;color:#fff;cursor:pointer}
-    button.secondary{background:#777}
-    footer{padding:10px;text-align:center;color:#666;font-size:13px}
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-image: url('mid.png');
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+      text-align: center;
+    }
+    .container {
+      background: rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      max-width: 900px;
+      margin: 40px auto;
+      border-radius: 15px;
+    }
+    img {
+      width: 100%;
+      border-radius: 15px;
+    }
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background-color: #4caf50;
+      color: white;
+    }
+    #progress {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #ffffff10;
+      overflow-x: auto;
+    }
+    th, td {
+      border: 1px solid #ffffff30;
+      padding: 8px;
+      color: #fff;
+    }
+    input[type="time"], textarea {
+      padding: 6px;
+      border-radius: 6px;
+      border: none;
+    }
+    #dailyQuote {
+      font-size: 18px;
+      margin-top: 20px;
+      padding: 10px;
+      background: #ffffff20;
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
-  <header><h1>📅 Lịch Làm Việc (Offline)</h1></header>
-  <main>
-    <div id="calendar-container"></div>
-  </main>
-
-  <!-- Modal nhập công việc -->
-  <div id="taskModal">
-    <div id="taskBox">
-      <h3 id="selectedDate">Ngày</h3>
-      <textarea id="taskInput" placeholder="Nhập công việc..."></textarea>
-      <div class="row">
-        <button onclick="saveTask()">Lưu</button>
-        <button class="secondary" onclick="closeModal()">Đóng</button>
-      </div>
+  <div class="container">
+    <h1>🎯 Mục tiêu học tập mỗi ngày</h1>
+    <img src="Xiaomi-Mi-11-Ultra.jpg" alt="Phần thưởng">
+    <p id="progress">Điểm hiện tại: 0 / 3120 | Cấp độ: <span id="level">0</span></p>
+    <div id="dailyQuote"></div>
+    <div id="daily-buttons">
+      <button onclick="diemDanh()">Điểm danh hôm nay (+10)</button><br>
+      <button onclick="congDiem('toan', 10)">Học Toán (+10)</button>
+      <button onclick="congDiem('ly', 10)">Học Lý (+10)</button>
+      <button onclick="congDiem('hoa', 10)">Học Hóa (+10)</button>
+      <button onclick="congDiem('anh', 10)">Học Tiếng Anh (+10)</button><br>
+      <button onclick="congDiem('on', 30)">Ôn tập kiến thức (+30)</button>
     </div>
+    <div style="margin-top: 20px;">
+      <label>⏰ Đặt giờ nhắc học: <input type="time" id="reminderTime"> <button onclick="setReminder()">Lưu</button></label>
+    </div>
+    <div style="margin-top: 15px;">
+      <button style="background-color:#f44336" onclick="xoaLichHomNay()">🗑️ Xóa dữ liệu hôm nay</button>
+      <button style="background-color:#e91e63" onclick="xoaGhiChuHomNay()">🗒️ Xóa ghi chú hôm nay</button>
+    </div>
+    <div style="margin-top: 30px;">
+      <h2>🗓️ Lịch học & Ghi chú</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Ngày</th>
+            <th>Nhiệm vụ</th>
+            <th>Ghi chú</th>
+          </tr>
+        </thead>
+        <tbody id="calendarBody"></tbody>
+      </table>
+    </div>
+    <canvas id="weeklyChart" width="400" height="200" style="margin-top:30px;"></canvas>
   </div>
 
-  <footer>
-    Lưu cục bộ trên thiết bị (LocalStorage). Muốn đồng bộ cloud thì thêm backend hoặc Supabase/Firebase.
-  </footer>
+  <script>
+    const TOTAL_DAYS = 312;
+    const TOTAL_SCORE = TOTAL_DAYS * 100;
+    let diem = parseInt(localStorage.getItem("diem")) || 0;
+    let today = new Date().toISOString().split('T')[0];
+    let done = JSON.parse(localStorage.getItem("done")) || {};
+    let notes = JSON.parse(localStorage.getItem("notes")) || {};
+    let reminderTime = localStorage.getItem("reminderTime") || "";
+    let lastCheck = localStorage.getItem("lastCheck") || "";
 
-<script>
-/* ====== LÝ LỊCH & LƯU TRỮ ====== */
-const container = document.getElementById('calendar-container');
-const taskModal = document.getElementById('taskModal');
-const selectedDateEl = document.getElementById('selectedDate');
-const taskInput = document.getElementById('taskInput');
-let currentKey = null;
-const YEAR = new Date().getFullYear();
+    const quotes = [
+      "📚 Hôm nay bạn học gì rồi? Cố gắng lên nhé!",
+      "🚀 Mỗi ngày một bước, bạn sẽ tiến xa!",
+      "💡 Học hôm nay - Thành công ngày mai!",
+      "🔥 Đừng để ngày hôm nay trôi qua vô ích!",
+      "🌱 Tri thức là sức mạnh, cố lên bạn nhé!"
+    ];
 
-function daysInMonth(month, year){ return new Date(year, month, 0).getDate(); }
-
-function renderCalendar(){
-  container.innerHTML = '';
-  for(let m=1;m<=12;m++){
-    const monthDiv = document.createElement('div');
-    monthDiv.className='month';
-    monthDiv.innerHTML = `<h2>Tháng ${m} - ${YEAR}</h2>`;
-    const calGrid = document.createElement('div'); calGrid.className='calendar';
-    const days = daysInMonth(m,YEAR);
-    for(let d=1; d<=days; d++){
-      const dayDiv = document.createElement('div');
-      dayDiv.className='day';
-      dayDiv.textContent = d;
-      const key = `${YEAR}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      if(localStorage.getItem(key)) dayDiv.classList.add('has-task');
-      dayDiv.onclick = () => openModal(key, d, m);
-      calGrid.appendChild(dayDiv);
+    function showDailyQuote() {
+      const index = new Date().getDate() % quotes.length;
+      document.getElementById("dailyQuote").innerText = quotes[index];
     }
-    monthDiv.appendChild(calGrid);
-    container.appendChild(monthDiv);
-  }
-}
 
-function openModal(key, day, month){
-  currentKey = key;
-  selectedDateEl.textContent = `Công việc ${day}/${month}/${YEAR}`;
-  taskInput.value = localStorage.getItem(key) || '';
-  taskModal.style.display = 'flex';
-}
-
-function closeModal(){ taskModal.style.display='none'; currentKey=null; }
-
-function saveTask(){
-  if(!currentKey) return closeModal();
-  const v = taskInput.value.trim();
-  if(v) localStorage.setItem(currentKey,v);
-  else localStorage.removeItem(currentKey);
-  renderCalendar();
-  closeModal();
-}
-
-/* ====== SERVICE WORKER REQUEST (PERMS) ====== */
-if('serviceWorker' in navigator){
-  window.addEventListener('load', async()=>{
-    try{
-      const reg = await navigator.serviceWorker.register('/service-worker.js');
-      console.log('SW registered',reg);
-
-      // Background Sync registration (if supported)
-      if('sync' in reg){
-        try{ await reg.sync.register('sync-tasks'); console.log('sync registered'); }catch(e){console.log('sync register fail',e);}
+    if (lastCheck && lastCheck !== today) {
+      const missed = done[lastCheck];
+      if (missed) {
+        const tasks = ['on', 'toan', 'ly', 'hoa', 'anh', 'diemdanh'];
+        tasks.forEach(task => {
+          if (!missed[task]) diem -= task === 'on' ? 30 : 10;
+        });
+        diem = Math.max(0, diem);
+        localStorage.setItem("diem", diem);
       }
+    }
+    localStorage.setItem("lastCheck", today);
 
-      // Periodic Sync registration (if supported and permission granted)
-      if('periodicSync' in reg){
-        try{
-          const status = await navigator.permissions.query({name:'periodic-background-sync'});
-          if(status.state === 'granted'){
-            await reg.periodicSync.register('update-calendar',{minInterval:24*60*60*1000});
-            console.log('periodic sync registered');
-          } else {
-            console.log('periodic sync not granted:',status.state);
+    function getLevel(score) {
+      if (score < 100) return 1;
+      if (score < 250) return 2;
+      if (score < 500) return 3;
+      if (score < 1000) return 4;
+      return 5;
+    }
+
+    function updateProgress() {
+      document.getElementById("progress").innerText = `Điểm hiện tại: ${diem} / ${TOTAL_SCORE} | Cấp độ: ${getLevel(diem)}`;
+    }
+
+    function congDiem(task, amount) {
+      let doneToday = done[today] || {};
+      if (doneToday[task]) return alert("Bạn đã hoàn thành nhiệm vụ này hôm nay!");
+      diem += amount;
+      doneToday[task] = true;
+      done[today] = doneToday;
+      localStorage.setItem("diem", diem);
+      localStorage.setItem("done", JSON.stringify(done));
+      updateProgress();
+      renderCalendar();
+      renderWeeklyChart();
+    }
+
+    function diemDanh() {
+      congDiem("diemdanh", 10);
+    }
+
+    function renderCalendar() {
+      const tbody = document.getElementById("calendarBody");
+      tbody.innerHTML = "";
+      const days = Object.keys(done).sort().reverse();
+      days.forEach(day => {
+        const row = document.createElement("tr");
+        const noteVal = notes[day] || "";
+        row.innerHTML = `
+          <td>${day}</td>
+          <td>${Object.keys(done[day]).join(", ")}</td>
+          <td><textarea onchange="saveNote('${day}', this.value)">${noteVal}</textarea></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function saveNote(day, value) {
+      notes[day] = value;
+      localStorage.setItem("notes", JSON.stringify(notes));
+    }
+
+    function renderWeeklyChart() {
+      const ctx = document.getElementById('weeklyChart').getContext('2d');
+      const labels = [];
+      const data = [];
+      const sortedDays = Object.keys(done).sort().slice(-7);
+      sortedDays.forEach(day => {
+        labels.push(day);
+        const sum = Object.keys(done[day]).reduce((acc, task) => acc + (task === 'on' ? 30 : 10), 0);
+        data.push(sum);
+      });
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Điểm mỗi ngày',
+            data: data,
+            backgroundColor: '#4caf50'
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
           }
-        }catch(e){console.log('periodic sync fail',e);}
-      }
+        }
+      });
+    }
 
-    }catch(err){ console.warn('SW reg failed',err); }
-  });
-}
-
-/* ====== PUSH SUBSCRIPTION (mẫu client side) ======
-   NOTE: cần server để gửi push (VAPID keys). Đây chỉ sample request user --> server.
-*/
-async function subscribeForPush(){
-  if(!('serviceWorker' in navigator)) return;
-  const reg = await navigator.serviceWorker.ready;
-  // show UI or send request to your backend to subscribe using VAPID public key
-  // Example: fetch('/subscribe', { method:'POST', body: JSON.stringify({}) })
-}
-
-/* ====== START ====== */
-renderCalendar();
-</script>
+    showDailyQuote();
+    updateProgress();
+    renderCalendar();
+    renderWeeklyChart();
+  </script>
 </body>
 </html>
