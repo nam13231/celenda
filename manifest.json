@@ -1,21 +1,48 @@
 {
-  "name": "Lịch làm việc offline",
-  "short_name": "LichLamViec",
+  "id": "lich-lam-viec-app", 
+  "name": "Lịch Làm Việc",
+  "short_name": "Lịch",
+  "description": "Ứng dụng lịch làm việc đơn giản, lưu công việc hàng ngày trực tiếp trên thiết bị.",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "orientation": "portrait",
+  "background_color": "#FFFFFF",
   "theme_color": "#4CAF50",
-  "description": "Ứng dụng lịch làm việc offline có lưu dữ liệu bộ nhớ.",
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
+  "screenshots": [
+    {
+      "src": "screenshots/screen1.png",
+      "sizes": "1080x1920",
+      "type": "image/png"
+    },
+    {
+      "src": "screenshots/screen2.png",
+      "sizes": "1080x1920",
+      "type": "image/png"
+    }
+  ],
   "icons": [
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
-  ]
+  ],
+  "categories": ["productivity", "utilities"],
+  "dir": "ltr",
+  "lang": "vi",
+  "iarc_rating_id": "e4c6f7d0-0000-0000-0000-000000000000",
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "scope_extensions": []
 }
